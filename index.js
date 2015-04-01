@@ -1,4 +1,6 @@
 var fs = require('fs'),
+    util = require('util'),
+    path = require('path'),
     mmap = require('mmap');
 
 function _latLng(ll) {
@@ -12,7 +14,7 @@ function _latLng(ll) {
     };
 }
 
-function Hgt(path, seLatLng, options) {
+function Hgt(path, swLatLng, options) {
     var fd = fs.openSync(path, 'r'),
         stat = fs.fstatSync(fd);
 
@@ -21,7 +23,7 @@ function Hgt(path, seLatLng, options) {
     };
 
     this._buffer = mmap(stat.size, mmap.PROT_READ, mmap.MAP_SHARED, fd);
-    this._seLatLng = _latLng(seLatLng);
+    this._swLatLng = _latLng(swLatLng);
 
     if (stat.size === 12967201 * 2) {
         this._resolution = 1;
@@ -73,7 +75,7 @@ Hgt.bilinear = function(row, col) {
     return avg(v1, v2, rowFrac);
 };
 
-Hgt.prototype.close = function() {
+Hgt.prototype.destroy = function() {
     this._buffer.unmap();
     delete this._buffer;
 };
@@ -81,8 +83,8 @@ Hgt.prototype.close = function() {
 Hgt.prototype.getElevation = function(latLng) {
     var size = this._size - 1,
         ll = _latLng(latLng),
-        row = (ll.lat - this._seLatLng.lat) * size,
-        col = (ll.lng - this._seLatLng.lng) * size;
+        row = (ll.lat - this._swLatLng.lat) * size,
+        col = (ll.lng - this._swLatLng.lng) * size;
 
     if (row < 0 || col < 0 || row > size || col > size) {
         throw new Error('Latitude/longitude is outside tile bounds (row=' +
@@ -99,6 +101,76 @@ Hgt.prototype._rowCol = function(row, col) {
     return this._buffer.readInt16BE(offset);
 };
 
+function TileSet(tileDir, options) {
+    this.options = options || {
+        loadTile: function(tileDir, latLng, cb) {
+            var ll = {
+                    lat: Math.floor(latLng.lat),
+                    lng: Math.floor(latLng.lng)
+                },
+                tileKey = this._tileKey(ll),
+                tilePath = path.join(tileDir, tileKey + '.hgt');
+            fs.exists(tilePath, function(exists) {
+                if (exists) {
+                    // TODO: Hgt creation options
+                    cb(undefined, new Hgt(tilePath, ll));
+                } else {
+                    cb({message: 'Tile does not exist: ' + tilePath});
+                }
+            });
+        }
+    };
+
+    this._tileDir = tileDir;
+    this._tiles = {};
+}
+
+TileSet.prototype.destroy = function() {
+    Object.keys(this._tiles).forEach(function(tileKey) {
+        this._tiles[tileKey].destroy();
+    }.bind(this));
+    delete this._tiles;
+};
+
+TileSet.prototype.getElevation = function(latLng, cb) {
+    var getTileElevation = function(tile, ll) {
+            cb(undefined, tile.getElevation(ll));
+        },
+        ll = _latLng(latLng),
+        tileKey = this._tileKey(ll),
+        tile = this._tiles[tileKey];
+
+    if (tile) {
+        getTileElevation(tile, ll);
+    } else {
+        this.options.loadTile.call(this, this._tileDir, ll, function(err, tile) {
+            if (err) {
+                cb(err);
+            } else {
+                this._tiles[tileKey] = tile;
+                getTileElevation(tile, ll);
+            }
+        }.bind(this));
+    }
+};
+
+TileSet.prototype._tileKey = function(latLng) {
+    var zeroPad = function(v, l) {
+        var r = v.toString();
+        while (r.length < l) {
+            r = '0' + r;
+        }
+        return r;
+    };
+
+    return util.format('%s%s%s%s',
+        latLng.lat < 0 ? 'S' : 'N',
+        zeroPad(Math.floor(latLng.lat), 2),
+        latLng.lng < 0 ? 'W' : 'E',
+        zeroPad(Math.floor(latLng.lng), 3));
+};
+
 module.exports = {
-    Hgt: Hgt
+    Hgt: Hgt,
+    TileSet: TileSet
 };

@@ -13,7 +13,7 @@ var test = require('tape'),
 
 test('can open hgt', function(t) {
     var hgt = new Hgt(__dirname + '/data/N57E011.hgt', [57, 11]);
-    hgt.close();
+    hgt.destroy();
     t.end();
 });
 
@@ -24,7 +24,7 @@ test('can query hgt nearestneighbour', function(t) {
     
     t.equal(hgt.getElevation([57, 11]), 0);
     t.equal(hgt.getElevation([57.7, 11.9]), 16);
-    hgt.close();
+    hgt.destroy();
     t.end();
 });
 
@@ -35,6 +35,6 @@ test('can query hgt bilinear', function(t) {
     
     t.equal(hgt.getElevation([57, 11]), 0);
     almostEqual(t, hgt.getElevation([57.7, 11.9]), 16);
-    hgt.close();
+    hgt.destroy();
     t.end();
 });

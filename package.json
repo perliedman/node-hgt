@@ -4,7 +4,7 @@
   "description": "Query hgt files (typically SRTM elevation data) in a performant way.",
   "main": "index.js",
   "scripts": {
-    "test": "tape ./test/hgt-spec.js | tap-spec",
+    "test": "tape ./test/*spec.js | tap-spec",
     "perf": "node ./test/perf-test.js"
   },
   "keywords": [

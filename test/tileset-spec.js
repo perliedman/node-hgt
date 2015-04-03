@@ -31,7 +31,7 @@ test('can query tileset', function(t) {
 });
 
 test('can\'t query non-existing tiles', function(t) {
-    var tileset = new TileSet(__dirname + '/data/');
+    var tileset = new TileSet(__dirname + '/data/', {downloader:null});
     tileset.getElevation([52.7, 11.9], function(err, elevation) {
         if (!err) {
             t.fail('getElevation for non-existing tile returned: ' + elevation);

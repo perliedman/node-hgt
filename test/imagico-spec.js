@@ -12,6 +12,8 @@ test('can search Imagico.de', function(t) {
     });
 });
 
+// Don't run this test by default
+/*
 test('can download file', function(t) {
     var dler = new ImagicoElevationDownloader(__dirname + '/data/');
     dler.download('N57E011', [57.7, 11.9], function(err) {
@@ -23,3 +25,4 @@ test('can download file', function(t) {
         t.end();
     });
 });
+*/

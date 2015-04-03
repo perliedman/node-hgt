@@ -5,7 +5,8 @@ var fs = require('fs'),
     mmap = require('mmap'),
     Promise = require('promise'),
     request = require('request'),
-    yauzl = require('yauzl');
+    yauzl = require('yauzl'),
+    extend = require('extend');
 
 function _latLng(ll) {
     if (ll.lat !== undefined && ll.lng !== undefined) {
@@ -22,9 +23,9 @@ function Hgt(path, swLatLng, options) {
     var fd = fs.openSync(path, 'r'),
         stat = fs.fstatSync(fd);
 
-    this.options = options || {
+    this.options = extend({}, {
         interpolation: Hgt.bilinear
-    };
+    }, options);
 
     this._buffer = mmap(stat.size, mmap.PROT_READ, mmap.MAP_SHARED, fd);
     this._swLatLng = _latLng(swLatLng);
@@ -106,7 +107,7 @@ Hgt.prototype._rowCol = function(row, col) {
 };
 
 function TileSet(tileDir, options) {
-    this.options = options || {
+    this.options = extend({}, {
         loadTile: function(tileDir, latLng, cb) {
             var ll = {
                     lat: Math.floor(latLng.lat),
@@ -132,7 +133,7 @@ function TileSet(tileDir, options) {
             }.bind(this));
         },
         downloader: new ImagicoElevationDownloader(tileDir)
-    };
+    }, options);
 
     this._tileDir = tileDir;
     this._tiles = {};
@@ -184,9 +185,7 @@ TileSet.prototype._tileKey = function(latLng) {
 };
 
 function ImagicoElevationDownloader(cacheDir, options) {
-    this.options = options || {
-
-    };
+    this.options = extend({}, options);
     this._cacheDir = cacheDir;
     this._downloads = {};
 }

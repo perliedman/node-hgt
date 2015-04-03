@@ -1,7 +1,7 @@
 {
   "name": "node-hgt",
   "version": "1.0.0",
-  "description": "Query hgt files (typically SRTM elevation data) in a performant way.",
+  "description": "Query hgt files (typically SRTM elevation data) with performance.",
   "main": "index.js",
   "scripts": {
     "test": "tape ./test/*spec.js | tap-spec",
@@ -10,11 +10,13 @@
   "keywords": [
     "hgt",
     "srtm",
-    "elevation"
+    "elevation",
+    "altitude"
   ],
   "author": "Per Liedman <per@liedman.net>",
   "license": "ISC",
   "dependencies": {
+    "extend": "^2.0.0",
     "mmap": "^2.0.2",
     "promise": "^6.1.0",
     "request": "^2.54.0",

@@ -118,11 +118,20 @@ function TileSet(tileDir, options) {
                 if (exists) {
                     // TODO: Hgt creation options
                     cb(undefined, new Hgt(tilePath, ll));
+                } else if (this.options.downloader) {
+                    this.options.downloader.download(tileKey, latLng, function(err) {
+                        if (!err) {
+                            cb(undefined, new Hgt(tilePath, ll));
+                        } else {
+                            cb(err);
+                        }
+                    });
                 } else {
                     cb({message: 'Tile does not exist: ' + tilePath});
                 }
-            });
-        }
+            }.bind(this));
+        },
+        downloader: new ImagicoElevationDownloader(tileDir)
     };
 
     this._tileDir = tileDir;

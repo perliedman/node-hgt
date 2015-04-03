@@ -17,9 +17,7 @@ npm install --save node-hgt
 Load and query a HGT file:
 
 ```js
-    var hgt = new Hgt(__dirname + '/data/N57E011.hgt', [57, 11], {
-        interpolation: Hgt.nearestNeighbour
-    });
+    var hgt = new Hgt(__dirname + '/data/N57E011.hgt', [57, 11]);
     
     // Return elevation in meters above sea level.
     // By default, elevation is interpolated bilinearly.

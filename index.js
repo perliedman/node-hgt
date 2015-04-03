@@ -32,7 +32,7 @@ function Hgt(path, swLatLng, options) {
     if (stat.size === 12967201 * 2) {
         this._resolution = 1;
         this._size = 3601;
-    } else if (stat.size === 144201 * 2) {
+    } else if (stat.size === 1442401 * 2) {
         this._resolution = 3;
         this._size = 1201;
     } else {

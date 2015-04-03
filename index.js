@@ -1,7 +1,11 @@
 var fs = require('fs'),
+    os = require('os'),
     util = require('util'),
     path = require('path'),
-    mmap = require('mmap');
+    mmap = require('mmap'),
+    Promise = require('promise'),
+    request = require('request'),
+    yauzl = require('yauzl');
 
 function _latLng(ll) {
     if (ll.lat !== undefined && ll.lng !== undefined) {
@@ -170,7 +174,105 @@ TileSet.prototype._tileKey = function(latLng) {
         zeroPad(Math.floor(latLng.lng), 3));
 };
 
+function ImagicoElevationDownloader(cacheDir, options) {
+    this.options = options || {
+
+    };
+    this._cacheDir = cacheDir;
+    this._downloads = {};
+}
+
+ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
+    var cleanup = function() {
+            delete this._downloads[tileKey];
+            fs.unlinkSync(tempPath);
+        }.bind(this),
+        download = this._downloads[tileKey],
+        tempPath,
+        stream;
+
+    if (!download) {
+        download = this.search(latLng)
+            .then(function(tileZips) {
+                tempPath = path.join(os.tmpdir(), tileZips[0].name);
+                stream = fs.createWriteStream(tempPath);
+                return this._download(tileZips[0].link, stream);
+            }.bind(this))
+            .then(function() {
+                this._unzip(tempPath, this._cacheDir);
+            }.bind(this))
+            .then(cleanup)
+            .catch(cleanup);
+        this._downloads[tileKey] = download;
+    }
+
+    download.then(function() {
+        cb(undefined);
+    }).catch(function(err) {
+        cb(err);
+    });
+};
+
+ImagicoElevationDownloader.prototype.search = function(latLng) {
+    var ll = _latLng(latLng);
+    return new Promise(function(fulfill, reject) {
+        request('http://www.imagico.de/map/dem_json.php?date=&lon=' +
+            ll.lng + '&lat=' + ll.lat + '&lonE=' + ll.lng +
+            '&latE=' + ll.lat + '&vf=1', function(err, response, body) {
+                if (!err && response.statusCode === 200) {
+                    var data = JSON.parse(body);
+                    fulfill(data);
+                } else {
+                    reject(err || response);
+                }
+            });
+    });
+};
+
+ImagicoElevationDownloader.prototype._download = function(url, stream) {
+    return new Promise(function(fulfill, reject) {
+        request(url, function(err, response) {
+            if (!err && response.statusCode === 200) {
+                fulfill(stream);
+            } else {
+                reject(err || response);
+            }
+        }).pipe(stream);
+    });
+};
+
+ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
+    return new Promise(function(fulfill, reject) {
+        yauzl.open(zipPath, function(err, zipfile) {
+            if (err) {
+                reject(err);
+                return;
+            }
+            zipfile
+            .on('entry', function(entry) {
+                if (/\/$/.test(entry.fileName)) {
+                    return;
+                }
+                zipfile.openReadStream(entry, function(err, readStream) {
+                    var lastSlashIdx = entry.fileName.lastIndexOf('/'),
+                        fileName = entry.fileName.substr(lastSlashIdx + 1),
+                        filePath = path.join(targetPath, fileName);
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    readStream.pipe(fs.createWriteStream(filePath));
+                });
+            });
+            zipfile.on('end', function() {
+                fulfill();
+            });
+        });
+    });
+};
+
 module.exports = {
     Hgt: Hgt,
-    TileSet: TileSet
+    TileSet: TileSet,
+    ImagicoElevationDownloader: ImagicoElevationDownloader
 };

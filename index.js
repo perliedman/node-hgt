@@ -21,23 +21,32 @@ function _latLng(ll) {
 
 function Hgt(path, swLatLng, options) {
     var fd = fs.openSync(path, 'r'),
+        stat;
+
+    try {
         stat = fs.fstatSync(fd);
 
-    this.options = extend({}, {
-        interpolation: Hgt.bilinear
-    }, options);
+        this.options = extend({}, {
+            interpolation: Hgt.bilinear
+        }, options);
 
-    this._buffer = mmap(stat.size, mmap.PROT_READ, mmap.MAP_SHARED, fd);
-    this._swLatLng = _latLng(swLatLng);
 
-    if (stat.size === 12967201 * 2) {
-        this._resolution = 1;
-        this._size = 3601;
-    } else if (stat.size === 1442401 * 2) {
-        this._resolution = 3;
-        this._size = 1201;
-    } else {
-        throw new Error('Unknown tile format (1 arcsecond and 3 arcsecond supported).');
+        if (stat.size === 12967201 * 2) {
+            this._resolution = 1;
+            this._size = 3601;
+        } else if (stat.size === 1442401 * 2) {
+            this._resolution = 3;
+            this._size = 1201;
+        } else {
+            throw new Error('Unknown tile format (1 arcsecond and 3 arcsecond supported).');
+        }
+
+        this._buffer = mmap(stat.size, mmap.PROT_READ, mmap.MAP_SHARED, fd);
+        this._swLatLng = _latLng(swLatLng);
+        this._fd = fd;
+    } catch (e) {
+        fs.closeSync(fd);
+        throw e;
     }
 }
 
@@ -82,6 +91,7 @@ Hgt.bilinear = function(row, col) {
 
 Hgt.prototype.destroy = function() {
     this._buffer.unmap();
+    fs.closeSync(this._fd);
     delete this._buffer;
 };
 
@@ -116,9 +126,15 @@ function TileSet(tileDir, options) {
                 tileKey = this._tileKey(ll),
                 tilePath = path.join(tileDir, tileKey + '.hgt');
             fs.exists(tilePath, function(exists) {
+                var tile;
                 if (exists) {
-                    // TODO: Hgt creation options
-                    cb(undefined, new Hgt(tilePath, ll));
+                    try {
+                        tile = new Hgt(tilePath, ll);
+                        // TODO: Hgt creation options
+                        cb(undefined, tile);
+                    } catch (e) {
+                        cb({message: 'Unable to load tile "' + tilePath + '": ' + e});
+                    }
                 } else if (this.options.downloader) {
                     this.options.downloader.download(tileKey, latLng, function(err) {
                         if (!err) {
@@ -191,7 +207,7 @@ function ImagicoElevationDownloader(cacheDir, options) {
 }
 
 ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
-    var cleanup = function() {
+    var cleanup = function(err) {
             delete this._downloads[tileKey];
             fs.unlinkSync(tempPath);
         }.bind(this),
@@ -207,7 +223,7 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
                 return this._download(tileZips[0].link, stream);
             }.bind(this))
             .then(function() {
-                this._unzip(tempPath, this._cacheDir);
+                return this._unzip(tempPath, this._cacheDir);
             }.bind(this))
             .then(cleanup)
             .catch(cleanup);
@@ -251,6 +267,8 @@ ImagicoElevationDownloader.prototype._download = function(url, stream) {
 
 ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
     return new Promise(function(fulfill, reject) {
+        var unzips = [];
+
         yauzl.open(zipPath, function(err, zipfile) {
             if (err) {
                 reject(err);
@@ -269,11 +287,20 @@ ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
                         reject(err);
                         return;
                     }
+
+                    unzips.push(new Promise(function(fulfill, reject) {
+                        readStream.on('end', fulfill);
+                        readStream.on('error', reject);
+                    }));
                     readStream.pipe(fs.createWriteStream(filePath));
                 });
             });
             zipfile.on('end', function() {
-                fulfill();
+                Promise.all(unzips)
+                    .then(function() {
+                        fulfill();
+                    })
+                    .catch(reject);
             });
         });
     });

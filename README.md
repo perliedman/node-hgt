@@ -6,6 +6,9 @@ node-hgt
 Read and query HGT files, for example from SRTM, for elevation data with high performance.
 Optionally, this module can also use cached and automatically download HGT files as required.
 
+node-hgt tries to be reasonably performant. A rough benchmark shows it can do 1.8M elevation calculations
+per second on my years old laptop.
+
 ## Install
 
 ```

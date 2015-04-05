@@ -1,6 +1,6 @@
 {
   "name": "node-hgt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Query hgt files (typically SRTM elevation data) with performance.",
   "main": "index.js",
   "scripts": {

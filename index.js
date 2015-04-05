@@ -44,6 +44,7 @@ function Hgt(path, swLatLng, options) {
         this._buffer = mmap(stat.size, mmap.PROT_READ, mmap.MAP_SHARED, fd);
         this._swLatLng = _latLng(swLatLng);
         this._fd = fd;
+
     } catch (e) {
         fs.closeSync(fd);
         throw e;
@@ -153,6 +154,7 @@ function TileSet(tileDir, options) {
 
     this._tileDir = tileDir;
     this._tiles = {};
+    this._loadingTiles = {};
 }
 
 TileSet.prototype.destroy = function() {
@@ -173,15 +175,37 @@ TileSet.prototype.getElevation = function(latLng, cb) {
     if (tile) {
         getTileElevation(tile, ll);
     } else {
-        this.options.loadTile.call(this, this._tileDir, ll, function(err, tile) {
-            if (err) {
-                cb(err);
-            } else {
-                this._tiles[tileKey] = tile;
+        this._loadTile(tileKey, ll, function(err, tile) {
+            if (!err) {
                 getTileElevation(tile, ll);
+            } else {
+                cb(err);
             }
+        });
+    }
+};
+
+TileSet.prototype._loadTile = function(tileKey, latLng, cb) {
+    var loadQueue = this._loadingTiles[tileKey];
+
+    if (!loadQueue) {
+        loadQueue = [];
+        this._loadingTiles[tileKey] = loadQueue;
+        this.options.loadTile.call(this, this._tileDir, latLng, function(err, tile) {
+            var q = this._loadingTiles[tileKey];
+            this._tiles[tileKey] = tile;
+            q.forEach(function(cb) {
+                if (err) {
+                    cb(err);
+                } else {
+                    cb(undefined, tile);
+                }
+            });
+            delete this._loadingTiles[tileKey];
         }.bind(this));
     }
+
+    loadQueue.push(cb);
 };
 
 TileSet.prototype._tileKey = function(latLng) {

@@ -5,7 +5,7 @@
   "homepage": "https://github.com/perliedman/node-hgt",
   "repository": {
     "type": "git",
-    "https://github.com/perliedman/node-hgt.git"
+    "url": "https://github.com/perliedman/node-hgt.git"
   },
   "main": "index.js",
   "scripts": {

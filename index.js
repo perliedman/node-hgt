@@ -219,9 +219,9 @@ TileSet.prototype._tileKey = function(latLng) {
 
     return util.format('%s%s%s%s',
         latLng.lat < 0 ? 'S' : 'N',
-        zeroPad(Math.floor(latLng.lat), 2),
+        zeroPad(Math.abs(Math.floor(latLng.lat)), 2),
         latLng.lng < 0 ? 'W' : 'E',
-        zeroPad(Math.floor(latLng.lng), 3));
+        zeroPad(Math.abs(Math.floor(latLng.lng)), 3));
 };
 
 function ImagicoElevationDownloader(cacheDir, options) {

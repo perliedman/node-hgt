@@ -151,7 +151,9 @@ function TileSet(tileDir, options) {
         },
         downloader: new ImagicoElevationDownloader(tileDir)
     }, options);
-
+    if (options && options.downloader === undefined) {
+        this.options.downloader = undefined;
+    }
     this._tileDir = tileDir;
     this._tiles = {};
     this._loadingTiles = {};

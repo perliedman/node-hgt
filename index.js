@@ -158,7 +158,11 @@ function TileSet(tileDir, options) {
     this._tileDir = tileDir;
     this._tileCache = LRU({
         max: 1000,
-        dispose: function (key, n) { n.destroy() }
+        dispose: function (key, n) { 
+            if(n) {
+                n.destroy();
+            }
+        }
     });
     this._loadingTiles = {};
 }

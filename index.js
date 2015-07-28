@@ -152,7 +152,7 @@ function TileSet(tileDir, options) {
         },
         downloader: new ImagicoElevationDownloader(tileDir)
     }, options);
-    if(options.downloader == undefined) {
+    if (options && options.downloader === undefined) {
         this.options.downloader = undefined;
     }
     this._tileDir = tileDir;
@@ -201,7 +201,9 @@ TileSet.prototype._loadTile = function(tileKey, latLng, cb) {
         this._loadingTiles[tileKey] = loadQueue;
         this.options.loadTile.call(this, this._tileDir, latLng, function(err, tile) {
             var q = this._loadingTiles[tileKey];
-            this._tileCache.set(tileKey, tile);
+            if(!err) {
+                this._tileCache.set(tileKey, tile);
+            }
             q.forEach(function(cb) {
                 if (err) {
                     cb(err);

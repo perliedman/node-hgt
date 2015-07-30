@@ -7,6 +7,7 @@ var fs = require('fs'),
     request = require('request'),
     yauzl = require('yauzl'),
     extend = require('extend');
+    LRU = require("lru-cache");
 
 function _latLng(ll) {
     if (ll.lat !== undefined && ll.lng !== undefined) {
@@ -155,15 +156,20 @@ function TileSet(tileDir, options) {
         this.options.downloader = undefined;
     }
     this._tileDir = tileDir;
-    this._tiles = {};
+    this._tileCache = LRU({
+        max: 1000,
+        dispose: function (key, n) { 
+            if(n) {
+                n.destroy();
+            }
+        }
+    });
     this._loadingTiles = {};
 }
 
 TileSet.prototype.destroy = function() {
-    Object.keys(this._tiles).forEach(function(tileKey) {
-        this._tiles[tileKey].destroy();
-    }.bind(this));
-    delete this._tiles;
+    this._tileCache.reset();
+    delete this._tileCache;
 };
 
 TileSet.prototype.getElevation = function(latLng, cb) {
@@ -172,7 +178,7 @@ TileSet.prototype.getElevation = function(latLng, cb) {
         },
         ll = _latLng(latLng),
         tileKey = this._tileKey(ll),
-        tile = this._tiles[tileKey];
+        tile = this._tileCache.get(tileKey);
 
     if (tile) {
         getTileElevation(tile, ll);
@@ -195,8 +201,8 @@ TileSet.prototype._loadTile = function(tileKey, latLng, cb) {
         this._loadingTiles[tileKey] = loadQueue;
         this.options.loadTile.call(this, this._tileDir, latLng, function(err, tile) {
             var q = this._loadingTiles[tileKey];
-            if (!err) {
-                this._tiles[tileKey] = tile;
+            if(!err) {
+                this._tileCache.set(tileKey, tile);
             }
             q.forEach(function(cb) {
                 if (err) {

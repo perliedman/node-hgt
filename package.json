@@ -22,11 +22,11 @@
   "license": "ISC",
   "dependencies": {
     "extend": "^2.0.0",
-    "mmap": "^2.0.2",
+    "lru-cache": "^2.6.5",
+    "mmap.js": "^1.0.0",
     "promise": "^6.1.0",
     "request": "^2.54.0",
-    "yauzl": "^2.2.1",
-    "lru-cache": "^2.6.5"
+    "yauzl": "^2.2.1"
   },
   "devDependencies": {
     "tap-spec": "^2.2.2",

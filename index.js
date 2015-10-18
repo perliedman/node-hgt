@@ -129,7 +129,7 @@ function TileSet(tileDir, options) {
             fs.exists(tilePath, function(exists) {
                 var tile;
                 if (exists) {
-                    process.nextTick(function() {
+                    setImmediate(function() {
                         try {
                             tile = new Hgt(tilePath, ll);
                             // TODO: Hgt creation options
@@ -147,7 +147,7 @@ function TileSet(tileDir, options) {
                         }
                     });
                 } else {
-                    process.nextTick(function() {
+                    setImmediate(function() {
                         cb({message: 'Tile does not exist: ' + tilePath});
                     })
                 }
@@ -184,7 +184,7 @@ TileSet.prototype.getElevation = function(latLng, cb) {
         tile = this._tileCache.get(tileKey);
 
     if (tile) {
-        process.nextTick(function() {
+        setImmediate(function() {
             getTileElevation(tile, ll);
         });
     } else {

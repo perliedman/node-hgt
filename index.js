@@ -6,8 +6,8 @@ var fs = require('fs'),
     Promise = require('promise'),
     request = require('request'),
     yauzl = require('yauzl'),
-    extend = require('extend');
-    LRU = require("lru-cache");
+    extend = require('extend'),
+    LRU = require('lru-cache');
 
 function _latLng(ll) {
     if (ll.lat !== undefined && ll.lng !== undefined) {

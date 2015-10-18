@@ -130,13 +130,15 @@ function TileSet(tileDir, options) {
             fs.exists(tilePath, function(exists) {
                 var tile;
                 if (exists) {
-                    try {
-                        tile = new Hgt(tilePath, ll);
-                        // TODO: Hgt creation options
-                        cb(undefined, tile);
-                    } catch (e) {
-                        cb({message: 'Unable to load tile "' + tilePath + '": ' + e});
-                    }
+                    process.nextTick(function() {
+                        try {
+                            tile = new Hgt(tilePath, ll);
+                            // TODO: Hgt creation options
+                            cb(undefined, tile);
+                        } catch (e) {
+                            cb({message: 'Unable to load tile "' + tilePath + '": ' + e, stack: e.stack});
+                        }
+                    });
                 } else if (this.options.downloader) {
                     this.options.downloader.download(tileKey, latLng, function(err) {
                         if (!err) {
@@ -146,7 +148,9 @@ function TileSet(tileDir, options) {
                         }
                     });
                 } else {
-                    cb({message: 'Tile does not exist: ' + tilePath});
+                    process.nextTick(function() {
+                        cb({message: 'Tile does not exist: ' + tilePath});
+                    })
                 }
             }.bind(this));
         },
@@ -181,7 +185,9 @@ TileSet.prototype.getElevation = function(latLng, cb) {
         tile = this._tileCache.get(tileKey);
 
     if (tile) {
-        getTileElevation(tile, ll);
+        process.nextTick(function() {
+            getTileElevation(tile, ll);
+        });
     } else {
         this._loadTile(tileKey, ll, function(err, tile) {
             if (!err) {

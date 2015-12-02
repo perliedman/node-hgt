@@ -1,6 +1,6 @@
 {
   "name": "node-hgt",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Query hgt files (typically SRTM elevation data) with performance.",
   "homepage": "https://github.com/perliedman/node-hgt",
   "repository": {

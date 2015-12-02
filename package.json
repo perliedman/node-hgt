@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/perliedman/node-hgt.git"
   },
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "tape ./test/*spec.js | tap-spec",
     "perf": "node ./test/perf-test.js"

@@ -42,4 +42,21 @@ by default.
     });
 ```
 
+There's also a synchronous tile set, if you know before hand which area you will query:
 
+```js
+    var tileset = new SyncTileSet('./data/', [57, 11], [58, 12], function(err) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+
+        // All tiles are loaded (or downloaded, if they were not already on disk)
+        // and queries can be made synchronous.
+
+        var elevation = tileset.getElevation([57.7, 11.9]);
+                console.log(elevation);
+            }
+        });
+    });
+```

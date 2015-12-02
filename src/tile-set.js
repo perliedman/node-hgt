@@ -1,48 +1,13 @@
-var path = require('path'),
-    fs = require('fs'),
-    extend = require('extend'),
+var extend = require('extend'),
     LRU = require('lru-cache'),
-    util = require('util'),
-    Hgt = require('./hgt'),
+    loadTile = require('./load-tile'),
     ImagicoElevationDownloader = require('./imagico'),
-    _latLng = require('./latlng');
+    _latLng = require('./latlng'),
+    tileKey = require('./tile-key');
 
 function TileSet(tileDir, options) {
     this.options = extend({}, {
-        loadTile: function(tileDir, latLng, cb) {
-            var ll = {
-                    lat: Math.floor(latLng.lat),
-                    lng: Math.floor(latLng.lng)
-                },
-                tileKey = this._tileKey(ll),
-                tilePath = path.join(tileDir, tileKey + '.hgt');
-            fs.exists(tilePath, function(exists) {
-                var tile;
-                if (exists) {
-                    setImmediate(function() {
-                        try {
-                            tile = new Hgt(tilePath, ll);
-                            // TODO: Hgt creation options
-                            cb(undefined, tile);
-                        } catch (e) {
-                            cb({message: 'Unable to load tile "' + tilePath + '": ' + e, stack: e.stack});
-                        }
-                    });
-                } else if (this.options.downloader) {
-                    this.options.downloader.download(tileKey, latLng, function(err) {
-                        if (!err) {
-                            cb(undefined, new Hgt(tilePath, ll));
-                        } else {
-                            cb(err);
-                        }
-                    });
-                } else {
-                    setImmediate(function() {
-                        cb({message: 'Tile does not exist: ' + tilePath});
-                    });
-                }
-            }.bind(this));
-        },
+        loadTile: loadTile,
         downloader: new ImagicoElevationDownloader(tileDir)
     }, options);
     if (options && options.downloader === undefined) {
@@ -70,15 +35,15 @@ TileSet.prototype.getElevation = function(latLng, cb) {
             cb(undefined, tile.getElevation(ll));
         },
         ll = _latLng(latLng),
-        tileKey = this._tileKey(ll),
-        tile = this._tileCache.get(tileKey);
+        key = tileKey(ll),
+        tile = this._tileCache.get(key);
 
     if (tile) {
         setImmediate(function() {
             getTileElevation(tile, ll);
         });
     } else {
-        this._loadTile(tileKey, ll, function(err, tile) {
+        this._loadTile(key, ll, function(err, tile) {
             if (!err) {
                 getTileElevation(tile, ll);
             } else {
@@ -111,22 +76,6 @@ TileSet.prototype._loadTile = function(tileKey, latLng, cb) {
     }
 
     loadQueue.push(cb);
-};
-
-TileSet.prototype._tileKey = function(latLng) {
-    var zeroPad = function(v, l) {
-        var r = v.toString();
-        while (r.length < l) {
-            r = '0' + r;
-        }
-        return r;
-    };
-
-    return util.format('%s%s%s%s',
-        latLng.lat < 0 ? 'S' : 'N',
-        zeroPad(Math.abs(Math.floor(latLng.lat)), 2),
-        latLng.lng < 0 ? 'W' : 'E',
-        zeroPad(Math.abs(Math.floor(latLng.lng)), 3));
 };
 
 module.exports = TileSet;

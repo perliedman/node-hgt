@@ -24,7 +24,7 @@
     "extend": "^3.0.0",
     "lru-cache": "^4.0.1",
     "mmap.js": "^1.0.0",
-    "promise": "^7.0.4",
+    "promise": "^8.0.0",
     "request": "^2.54.0",
     "yauzl": "^2.2.1"
   },

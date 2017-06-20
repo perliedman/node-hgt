@@ -70,13 +70,13 @@ ImagicoElevationDownloader.prototype.search = function(latLng) {
 
 ImagicoElevationDownloader.prototype._download = function(url, stream) {
     return new Promise(function(fulfill, reject) {
-        request(url, function(err, response) {
-            if (!err && response.statusCode === 200) {
-                fulfill(stream);
-            } else {
-                reject(err || response);
-            }
-        }).pipe(stream);
+        request(url).pipe(stream);
+        stream.on('close', function() {
+            fulfill(stream);
+        });
+        stream.on('error', function(error) {
+            reject(error);
+        });
     });
 };
 

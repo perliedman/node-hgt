@@ -23,7 +23,7 @@ test('can query hgt nearestneighbour', function(t) {
     });
 
     t.equal(hgt.getElevation([57, 11]), 0);
-    t.equal(hgt.getElevation([57.7, 11.9]), 16);
+    t.equal(hgt.getElevation([57.7, 11.9]), 13);
     hgt.destroy();
     t.end();
 });
@@ -34,7 +34,7 @@ test('can query hgt bilinear', function(t) {
     });
 
     t.equal(hgt.getElevation([57, 11]), 0);
-    almostEqual(t, hgt.getElevation([57.7, 11.9]), 16);
+    almostEqual(t, hgt.getElevation([57.7, 11.9]), 13);
     hgt.destroy();
     t.end();
 });

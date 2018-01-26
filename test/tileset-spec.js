@@ -23,7 +23,7 @@ test('can query tileset', function(t) {
         if (err) {
             t.fail('getElevation failed: ' + err.message);
         } else {
-            almostEqual(t, elevation, 16);
+            almostEqual(t, elevation, 13);
         }
         tileset.destroy();
         t.end();

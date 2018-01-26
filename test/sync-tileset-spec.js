@@ -30,7 +30,7 @@ test('can query synchronous tileset', function(t) {
         }
 
         var elevation = tileset.getElevation([57.7, 11.9]);
-        almostEqual(t, elevation, 16);
+        almostEqual(t, elevation, 13);
         tileset.destroy();
         t.end();
     });

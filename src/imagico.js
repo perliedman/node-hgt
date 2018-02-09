@@ -15,6 +15,7 @@ function ImagicoElevationDownloader(cacheDir, options) {
 
 ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
     var cleanup = function() {
+            console.log('Cleaning up after download of ' + tileKey);
             delete this._downloads[tileKey];
             fs.unlinkSync(tempPath);
         }.bind(this),
@@ -22,6 +23,7 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
         tempPath,
         stream;
 
+    console.log('Attempting download for tile ' + tileKey);
     if (!download) {
         download = this.search(latLng)
             .then(function(tileZips) {
@@ -31,6 +33,7 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
 
                 tempPath = path.join(os.tmpdir(), tileZips[0].name);
                 stream = fs.createWriteStream(tempPath);
+                console.log('Downloading ' + tileZips[0].link + ' to ' + tempPath);
                 return this._download(tileZips[0].link, stream);
             }.bind(this))
             .then(function() {
@@ -38,20 +41,26 @@ ImagicoElevationDownloader.prototype.download = function(tileKey, latLng, cb) {
             }.bind(this))
             .then(cleanup)
             .catch(function(err) {
+                console.log('Error while downloading ' + tileKey + ': ' + err);
                 cleanup();
                 throw err;
             });
         this._downloads[tileKey] = download;
+    } else {
+        console.log('Awaiting already existing download');
     }
 
     download.then(function() {
+        console.log('Download complete for ' + tileKey);
         cb(undefined);
     }).catch(function(err) {
+        console.log('Download failed for ' + tileKey);
         cb(err);
     });
 };
 
 ImagicoElevationDownloader.prototype.search = function(latLng) {
+    console.log('Starting search for ' + latLng);
     var ll = _latLng(latLng);
     return new Promise(function(fulfill, reject) {
         request('http://www.imagico.de/map/dem_json.php?date=&lon=' +
@@ -60,11 +69,14 @@ ImagicoElevationDownloader.prototype.search = function(latLng) {
                 if (!err && response.statusCode === 200) {
                     try {
                         var data = JSON.parse(body);
+                        console.log('Search complete for ' + latLng);
                         fulfill(data);
                     } catch (e) {
+                        console.log('Search failed for ' + latLng + ': ' + e);
                         reject('Could not parse response from imagico: ' + body);
                     }
                 } else {
+                    console.log('Search failed for ' + latLng + ': ' + err);
                     reject(err || response);
                 }
             });
@@ -72,11 +84,14 @@ ImagicoElevationDownloader.prototype.search = function(latLng) {
 };
 
 ImagicoElevationDownloader.prototype._download = function(url, stream) {
+    console.log('Starting ZIP download for ' + url);
     return new Promise(function(fulfill, reject) {
         request(url, function(err, response) {
             if (!err && response.statusCode === 200) {
+                console.log('Finished ZIP download for ' + url);
                 fulfill(stream);
             } else {
+                console.log('Failed ZIP download for ' + url + ': ' + err);
                 reject(err || response);
             }
         }).pipe(stream);
@@ -84,11 +99,13 @@ ImagicoElevationDownloader.prototype._download = function(url, stream) {
 };
 
 ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
+    console.log('Starting unzip for ' + zipPath);
     return new Promise(function(fulfill, reject) {
         var unzips = [];
 
         yauzl.open(zipPath, function(err, zipfile) {
             if (err) {
+                console.log('Unzip failed for ' + zipPath + ': ' + err);
                 reject(err);
                 return;
             }
@@ -102,6 +119,7 @@ ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
                         fileName = entry.fileName.substr(lastSlashIdx + 1),
                         filePath = path.join(targetPath, fileName);
                     if (err) {
+                        console.log('Unzip of ' + entry.fileName + ' failed for ' + zipPath);
                         reject(err);
                         return;
                     }
@@ -116,6 +134,7 @@ ImagicoElevationDownloader.prototype._unzip = function(zipPath, targetPath) {
             zipfile.on('end', function() {
                 Promise.all(unzips)
                     .then(function() {
+                        console.log('Unzip of completed for ' + zipPath);
                         fulfill();
                     })
                     .catch(reject);

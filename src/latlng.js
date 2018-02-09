@@ -3,8 +3,16 @@ module.exports = function _latLng(ll) {
         return ll;
     }
 
-    return {
-        lat: ll[0],
-        lng: ll[1]
-    };
+    return new LatLng(ll[0], ll[1])
 };
+
+function LatLng(lat, lng) {
+  this.lat = lat;
+  this.lng = lng;
+}
+
+LatLng.prototype = {
+  toString: function() {
+    return 'lat=' + this.lat + ', lng=' + this.lng
+  }
+}

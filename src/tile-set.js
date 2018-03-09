@@ -1,14 +1,16 @@
 var extend = require('extend'),
     LRU = require('lru-cache'),
     loadTile = require('./load-tile'),
-    ImagicoElevationDownloader = require('./imagico'),
+    //ImagicoElevationDownloader = require('./imagico'),
+    MapzenElevationDownloader = require('./mapzen'),
     _latLng = require('./latlng'),
     tileKey = require('./tile-key');
 
 function TileSet(tileDir, options) {
     this.options = extend({}, {
         loadTile: loadTile,
-        downloader: new ImagicoElevationDownloader(tileDir)
+        //downloader: new ImagicoElevationDownloader(tileDir)
+        downloader: new MapzenElevationDownloader(tileDir)
     }, options);
     if (options && options.downloader === undefined) {
         this.options.downloader = undefined;

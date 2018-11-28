@@ -3,7 +3,7 @@ node-hgt
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/perliedman/node-hgt.svg)](https://greenkeeper.io/)
 
-[![npm version](https://img.shields.io/npm/v/node-hgt.svg)](https://www.npmjs.com/package/node-hgt) [![Build status](https://travis-ci.org/perliedman/node-hgt.png)](https://travis-ci.org/perliedman/node-hgt)
+[![npm version](https://img.shields.io/npm/v/node-hgt.svg)](https://www.npmjs.com/package/node-hgt) [![Build status](https://travis-ci.org/perliedman/node-hgt.svg?branch=master)](https://travis-ci.org/perliedman/node-hgt)
 
 Read and query HGT files, for example from SRTM, for elevation data with high performance.
 Optionally, this module can also use cached and automatically download HGT files as required.

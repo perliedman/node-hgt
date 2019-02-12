@@ -57,8 +57,6 @@ There's also a synchronous tile set, if you know before hand which area you will
         // and queries can be made synchronous.
 
         var elevation = tileset.getElevation([57.7, 11.9]);
-                console.log(elevation);
-            }
-        });
+        console.log(elevation);
     });
 ```

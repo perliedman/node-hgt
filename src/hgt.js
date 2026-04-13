@@ -2,6 +2,8 @@ var fs = require('fs'),
     extend = require('extend'),
     _latLng = require('./latlng');
 
+var HGT_VOID = -32768;
+
 function Hgt(path, swLatLng, options) {
     var fd = fs.openSync(path, 'r'),
         stat;
@@ -31,7 +33,8 @@ function Hgt(path, swLatLng, options) {
 }
 
 Hgt.nearestNeighbour = function(row, col) {
-    return this._rowCol(Math.round(row), Math.round(col));
+    var elevation = this._rowCol(Math.round(row), Math.round(col));
+    return elevation === HGT_VOID ? null : elevation;
 };
 
 Hgt.bilinear = function(row, col) {
@@ -48,8 +51,27 @@ Hgt.bilinear = function(row, col) {
         v10 = this._rowCol(rowLow, colHi),
         v11 = this._rowCol(rowHi, colHi),
         v01 = this._rowCol(rowHi, colLow),
-        v1 = avg(v00, v10, colFrac),
+        v1, v2;
+
+    if (v00 !== HGT_VOID && v10 !== HGT_VOID) {
+        v1 = avg(v00, v10, colFrac);
+    } else if (v00 !== HGT_VOID) {
+        v1 = v00;
+    } else if (v10 !== HGT_VOID) {
+        v1 = v10;
+    } else {
+        v1 = null;
+    }
+
+    if (v01 !== HGT_VOID && v11 !== HGT_VOID) {
         v2 = avg(v01, v11, colFrac);
+    } else if (v01 !== HGT_VOID) {
+        v2 = v01;
+    } else if (v11 !== HGT_VOID) {
+        v2 = v11;
+    } else {
+        v2 = null;
+    }
 
     // console.log('row = ' + row);
     // console.log('col = ' + col);
@@ -66,7 +88,15 @@ Hgt.bilinear = function(row, col) {
     // console.log('v1 = ' + v1);
     // console.log('v2 = ' + v2);
 
-    return avg(v1, v2, rowFrac);
+    if (v1 !== null && v2 !== null) {
+        return avg(v1, v2, rowFrac);
+    } else if (v1 !== null) {
+        return v1;
+    } else if (v2 !== null) {
+        return v2;
+    } else {
+        return null;
+    }
 };
 
 Hgt.prototype.destroy = function() {

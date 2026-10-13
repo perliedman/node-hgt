@@ -1,6 +1,8 @@
 node-hgt
 ========
 
+**For a modern alternative which is maintained, please look at [https://github.com/glideandseek/node-hgt](https://github.com/glideandseek/node-hgt)**
+
 [![Greenkeeper badge](https://badges.greenkeeper.io/perliedman/node-hgt.svg)](https://greenkeeper.io/)
 
 [![npm version](https://img.shields.io/npm/v/node-hgt.svg)](https://www.npmjs.com/package/node-hgt) [![Build status](https://travis-ci.org/perliedman/node-hgt.svg?branch=master)](https://travis-ci.org/perliedman/node-hgt)
